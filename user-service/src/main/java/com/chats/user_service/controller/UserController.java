@@ -4,6 +4,7 @@ import com.chats.user_service.dto.UserRequest;
 import com.chats.user_service.dto.UserResponse;
 import com.chats.user_service.service.PatternDeterminer;
 import com.chats.user_service.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -14,29 +15,18 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(methods = {RequestMethod.PUT,RequestMethod.POST,RequestMethod.GET},origins = "http://localhost:5173/")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private PatternDeterminer patternDeterminer;
+    private final PatternDeterminer patternDeterminer;
 
     @PostMapping("/create")
     public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest userRequest){
         try{
             System.out.println("User Request:"+userRequest);
             return ResponseEntity.ok(this.userService.createUser(userRequest));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-    @GetMapping("/auth/{emailId}")
-    public ResponseEntity<String> auth(@PathVariable String  emailId){
-        try{
-            System.out.println("Email Id:"+emailId);
-            return ResponseEntity.ok(this.userService.getUserId(emailId));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -52,7 +42,6 @@ public class UserController {
     }
     @GetMapping("/find/{text}")
     public ResponseEntity<UserResponse> getUserByUserName(@PathVariable String text){
-
         try{
             String result=this.patternDeterminer.detectType(text);
 
@@ -78,8 +67,19 @@ public class UserController {
         }
     }
 
-    @PutMapping("/{userId}/{chatRoomId}")
-    public ResponseEntity<List<String>> addNewChatRoom(@PathVariable String userId,@PathVariable String chatRoomId){
+    @GetMapping("/{userId}/validate")
+    public ResponseEntity<?> validateUser(@PathVariable String userId){
+        try{
+            return ResponseEntity.ok(this.userService.validateUserId(userId));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+
+    @PutMapping("/addChatRoom/{userId}/{chatRoomId}")
+    public ResponseEntity<?> addNewChatRoom(@PathVariable String userId,@PathVariable String chatRoomId){
         try{
             return ResponseEntity.ok(this.userService.setNewChatRoomId(userId,chatRoomId));
         } catch (Exception e) {

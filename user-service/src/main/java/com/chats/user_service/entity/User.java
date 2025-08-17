@@ -30,9 +30,6 @@ public class User {
 
     private String fullName;
 
-    @Column(nullable = false)
-    private String password;
-
     private Status status;
 
     private LocalDateTime lastSeen;

@@ -13,7 +13,6 @@ public class UserRequest {
     private String emailId;
     private String userName;
     private String fullName;
-    private String password;
     private Status status;
     private LocalDateTime lastSeen;
     List<String> allChatRooms;

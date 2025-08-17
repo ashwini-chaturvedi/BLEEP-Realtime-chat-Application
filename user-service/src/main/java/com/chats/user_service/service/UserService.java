@@ -5,6 +5,7 @@ import com.chats.user_service.dto.UserResponse;
 import com.chats.user_service.entity.User;
 import com.chats.user_service.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,12 +14,13 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
 
-    private UserResponse mapUserToUserResponse(User user) {
+    private final UserRepository userRepository;
+
+    private  UserResponse mapUserToUserResponse(User user) {
 
         UserResponse userResponse = new UserResponse();
 
@@ -27,7 +29,6 @@ public class UserService {
         userResponse.setEmailId(user.getEmailId());
         userResponse.setFullName(user.getFullName());
         userResponse.setProfileImageURL(user.getProfileImageURL());
-        userResponse.setPassword(user.getPassword());
         userResponse.setStatus(user.getStatus());
         userResponse.setLastSeen(user.getLastSeen());
         userResponse.setCreatedAt(user.getCreatedAt());
@@ -51,7 +52,6 @@ public class UserService {
         newUser.setEmailId(userRequest.getEmailId());
         newUser.setFullName(userRequest.getFullName());
         newUser.setProfileImageURL(userRequest.getProfileImageURL());
-        newUser.setPassword(userRequest.getPassword());
         newUser.setStatus(userRequest.getStatus());
 
         try {
@@ -69,13 +69,6 @@ public class UserService {
 
         return mapUserToUserResponse(existingUser);
     }
-
-    public Boolean validateUser(String userId) {
-        return this.userRepository
-                .existsById(userId);
-
-    }
-
 
     public List<String> getAllUsers(String userId) {
         User existingUser = this.userRepository
@@ -104,11 +97,6 @@ public class UserService {
         return allChatRooms;
     }
 
-    public String getUserId(String emailId) {
-        User existingUser = userRepository.findByEmailId(emailId);
-
-        return existingUser.getUserId();
-    }
 
     public UserResponse getUserByUserName(String userName) {
         System.out.println("UserName:"+userName);
@@ -126,5 +114,14 @@ public class UserService {
         User existingUser = this.userRepository.findByEmailId(emailId);
 
         return mapUserToUserResponse(existingUser);
+    }
+
+    public boolean validateUserName(String userName) {
+        return this.userRepository.existsByUserName(userName);
+    }
+
+
+    public boolean validateUserId(String userId) {
+        return this.userRepository.existsById(userId);
     }
 }

@@ -18,7 +18,7 @@ const AddFriends = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [friends, setFriends] = useState([]);
+    const [friend, setFriend] = useState(null); // Initialize as null instead of undefined
     const [hasSearched, setHasSearched] = useState(false);
 
     // Modal state
@@ -31,7 +31,10 @@ const AddFriends = () => {
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const navigate = useNavigate();
-    const userId = useSelector((state) => state.authReducer.userId)
+    const user = useSelector((state) => state.authReducer.user)
+    const userId = user?.userId
+    const token = useSelector((state) => state.authReducer.token)
+
 
     const fetchFriend = async (e) => {
         e.preventDefault();
@@ -43,11 +46,15 @@ const AddFriends = () => {
         setLoading(true);
         setError('');
         setHasSearched(true);
+        setFriend(null); // Reset friend data
 
         try {
             const res = await fetch(`${backendUrl}/user/find/${searchTerm}`, {
                 method: "GET",
-                headers: { "Accept": "application/json" },
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
             });
 
             if (!res.ok) {
@@ -55,13 +62,13 @@ const AddFriends = () => {
                 throw new Error(errorData.message || `Fetch failed: ${res.status}`);
             }
 
-            const fetchedData = await res.json();
-            setFriends(Array.isArray(fetchedData) ? fetchedData : [fetchedData]);
+            const friendData = await res.json();
+            setFriend(friendData);
 
         } catch (e) {
             console.error("Failed to load Friend:", e);
             setError(e.message);
-            setFriends([]);
+            setFriend(null); // Ensure friend is null on error
         } finally {
             setLoading(false);
         }
@@ -94,7 +101,8 @@ const AddFriends = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    "Authorization":`Bearer ${token}`
                 },
                 body: JSON.stringify(roomDetails),
                 mode: 'cors'
@@ -124,6 +132,7 @@ const AddFriends = () => {
             setIsSubmitting(false);
         }
     };
+    
     const handleModalClose = () => {
         setIsModalOpen(false);
         setSelectedFriend(null);
@@ -131,7 +140,8 @@ const AddFriends = () => {
     };
 
     const getChatDisplayName = (friend) => {
-        return friend.fullName || friend.username || 'Unknown';
+        if (!friend) return 'Unknown';
+        return friend.fullName || friend.userName || 'Unknown'; // Note: API returns userName, not username
     };
 
     function stringToColor(string) {
@@ -148,6 +158,7 @@ const AddFriends = () => {
     }
 
     function stringAvatar(name) {
+        if (!name) return { sx: { bgcolor: '#666' }, children: '?' };
         const nameParts = name.split(' ');
         const initials = nameParts.length > 1
             ? `${nameParts[0][0]}${nameParts[1][0]}`
@@ -191,7 +202,7 @@ const AddFriends = () => {
 
                 {error && <div className="p-4 text-center text-red-400">Error: {error}</div>}
 
-                {!loading && !error && hasSearched && friends.length === 0 && (
+                {!loading && !error && hasSearched && !friend && (
                     <div className="p-4 text-center text-gray-400">No users found.</div>
                 )}
 
@@ -199,18 +210,16 @@ const AddFriends = () => {
                     <div className="p-4 text-center text-gray-400">Enter a name to search for friends.</div>
                 )}
 
-                {!loading && friends.map((friend, index) => (
-                    <div
-                        key={friend._id || friend.id || index}
-                        className="flex items-center p-3 hover:bg-gray-700 cursor-pointer border-b border-gray-600"
-                    >
+                {/* Only render friend data if friend exists */}
+                {!loading && !error && friend && (
+                    <div className="flex items-center p-3 hover:bg-gray-700 cursor-pointer border-b border-gray-600">
                         <Avatar {...stringAvatar(getChatDisplayName(friend))} />
                         <div className="flex-grow min-w-0 mx-3">
                             <h3 className="font-bold truncate text-lg">
                                 {getChatDisplayName(friend)}
                             </h3>
-                            {friend.username && friend.username !== friend.fullName && (
-                                <p className="text-sm text-gray-400">@{friend.username}</p>
+                            {friend.userName && friend.userName !== friend.fullName && (
+                                <p className="text-sm text-gray-400">@{friend.userName}</p>
                             )}
                         </div>
                         <button
@@ -220,7 +229,7 @@ const AddFriends = () => {
                             Chat
                         </button>
                     </div>
-                ))}
+                )}
             </div>
 
             {/* Modal */}

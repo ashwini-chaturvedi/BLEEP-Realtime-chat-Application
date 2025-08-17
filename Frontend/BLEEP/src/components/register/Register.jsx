@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { MdAlternateEmail } from "react-icons/md";
-import { BleepLoader,Login } from '../AllComponents';
+import { BleepLoader, Login } from '../AllComponents';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -11,9 +11,9 @@ import { motion } from 'framer-motion';
 
 // A placeholder for your logo
 const Logo = () => (
-    <svg className="h-12 w-auto text-gray-800" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" />
-    </svg>
+  <svg className="h-12 w-auto text-gray-800" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" />
+  </svg>
 );
 
 
@@ -21,11 +21,23 @@ const Logo = () => (
 
 const RegisterComponent = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
-  const navigate=useNavigate()
+  const navigate = useNavigate()
+  const backendUrl = import.meta.env.VITE_BACKEND_URL
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     console.log("Registration Data:", data);
-   
+
+    const response = await fetch(`${backendUrl}/auth/register`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data), // must be stringified
+      mode: "cors"
+    });
+
+    console.log(response)
     navigate('/login')
   };
 
@@ -54,18 +66,18 @@ const RegisterComponent = () => {
         </div>
 
         <div>
-          
+
           <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
           <div></div>
           <input
-          
+
             type='email'
-            {...register("email", { required: "Email is required" })}
+            {...register("emailId", { required: "Email is required" })}
             className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition'
             placeholder='ashwinichaturvedi8924@gmail.com'
-            
+
           />
-          
+
           {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
         </div>
 
@@ -88,7 +100,7 @@ const RegisterComponent = () => {
             className='w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition'
             placeholder='••••••••'
           />
-           {errors.password && <p className="text-red-500 text-xs mt-1">Password must be at least 6 characters.</p>}
+          {errors.password && <p className="text-red-500 text-xs mt-1">Password must be at least 6 characters.</p>}
         </div>
 
         {/* Submit Button */}
@@ -126,7 +138,7 @@ const RegisterComponent = () => {
         <p className="text-center text-sm text-gray-600 mt-8">
           Already have an account?{' '}
           <span
-            onClick={()=>navigate('/login')}
+            onClick={() => navigate('/login')}
             className="font-semibold text-green-600 hover:underline cursor-pointer"
           >
             Log in here
@@ -149,28 +161,28 @@ const App = () => {
       >
         {/* Left Side - Illustration and Branding */}
         <div className="w-full lg:w-1/2 bg-gradient-to-b from-black to-gray-300 p-8 md:p-12 flex flex-col justify-center items-center text-center">
-            <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.8, type: 'spring', stiffness: 120 }}
-            >
-                <div className="">
-                  <BleepLoader />
-                </div>
-                <h2 className="text-4xl font-bold  mt-8 text-yellow-400">
-                    Start Your Journey
-                </h2>
-                <p className=" mt-4 max-w-md mx-auto text-lg text-white">
-                    Create an account to connect to your Family,Friends and Peers.
-                    
-                </p>
-                
-            </motion.div>
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.8, type: 'spring', stiffness: 120 }}
+          >
+            <div className="">
+              <BleepLoader />
+            </div>
+            <h2 className="text-4xl font-bold  mt-8 text-yellow-400">
+              Start Your Journey
+            </h2>
+            <p className=" mt-4 max-w-md mx-auto text-lg text-white">
+              Create an account to connect to your Family,Friends and Peers.
+
+            </p>
+
+          </motion.div>
         </div>
 
-        
-          <RegisterComponent />
-        
+
+        <RegisterComponent />
+
       </motion.div>
     </main>
   );

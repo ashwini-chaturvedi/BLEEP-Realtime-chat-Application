@@ -7,6 +7,7 @@ import { RiUserAddFill } from "react-icons/ri";
 import { BackgroundWaves, FloatingParticles } from '../AllComponents';
 import { useNavigate } from 'react-router-dom';
 import { TiEdit } from "react-icons/ti";
+import { useSelector } from 'react-redux';
 
 
 const ChatList = ({ chats, onSelectChat, width, onWidthChange }) => {
@@ -15,6 +16,8 @@ const ChatList = ({ chats, onSelectChat, width, onWidthChange }) => {
   const [allChats, setAllChats] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const token = useSelector((state) => state.authReducer.token)
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const navigate = useNavigate()
@@ -45,7 +48,11 @@ const ChatList = ({ chats, onSelectChat, width, onWidthChange }) => {
 
         const res = await fetch(`${backendUrl}/chat-room/allChats?${params.toString()}`, {
           method: "GET",
-          headers: { "Accept": "application/json" },
+          headers: {
+            "Accept": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          mode: "cors"
         });
 
         if (!res.ok) {
@@ -67,7 +74,7 @@ const ChatList = ({ chats, onSelectChat, width, onWidthChange }) => {
 
     fetchAllChats();
     // CORRECTION 2: Depend on the joined string to prevent unnecessary re-fetches.
-  }, [backendUrl, chats]);
+  }, [backendUrl, chats, token]);
 
   const handleMouseDown = (e) => {
     setIsResizing(true);
@@ -132,11 +139,32 @@ const ChatList = ({ chats, onSelectChat, width, onWidthChange }) => {
   }
 
   function stringAvatar(name) {
+    // Handle null, undefined, or empty string
+    if (!name || typeof name !== 'string') {
+      return {
+        sx: {
+          bgcolor: '#666666', // default color
+        },
+        children: '?', // default character
+      };
+    }
+
+    const words = name.trim().split(' ');
+    let initials = '';
+
+    if (words.length === 1) {
+      // Single word: use first two characters or just first character
+      initials = words[0].length >= 2 ? words[0][0] + words[0][1] : words[0][0];
+    } else {
+      // Multiple words: use first character of first two words
+      initials = words[0][0] + words[1][0];
+    }
+
     return {
       sx: {
         bgcolor: stringToColor(name),
       },
-      children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
+      children: initials.toUpperCase(),
     };
   }
 
@@ -160,7 +188,7 @@ const ChatList = ({ chats, onSelectChat, width, onWidthChange }) => {
             <TiEdit
               className='absolute top-3/4 left-3/4 transform -translate-x-1/2 -translate-y-1/2 text-black bg-white bg-opacity-80 rounded-full p-1 hover:bg-black hover:text-white '
               size={35}
-              onClick={()=>navigate('/editProfile')}
+              onClick={() => navigate('/editProfile')}
             />
           </motion.div>
 

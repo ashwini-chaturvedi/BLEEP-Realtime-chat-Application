@@ -21,46 +21,46 @@ const LoginComponent = () => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL
   const { register, handleSubmit, formState: { errors } } = useForm();
   const navigate = useNavigate()
-  const dispatch=useDispatch()
+  const dispatch = useDispatch()
 
-  const onSubmit = async (data) => {
-    console.log("Registration Data:", data);
+  // Updated onSubmit function for your LoginComponent
+const onSubmit = async (data) => {
+  console.log("Login Data:", data);
+  
 
-
-    try {
-      if (!backendUrl) {
-        throw new Error("backendUrl is not defined");
-      }
-
-      const response = await fetch(`${backendUrl}/user/auth/${data.emailId}`, {
-        method: "GET",
-        headers: {
-          "Accept": "application/json",
-        },
-        mode: "cors"
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Failed to fetch user auth:", response.status, errorText);
-        // show user-friendly error here
-        return;
-      }
-      const userId = await response.text();
-      console.log("Data:", userId);
-
-      if (!userId) {
-        console.error("userId missing in response:", userId);
-        return;
-      }
-      dispatch(login({userId}))//setting the value in Redux
-
-      navigate(`/profile`);
-    } catch (err) {
-      console.error("Error in onSubmit:", err);
-      // optionally show error to user
+  try {
+    if (!backendUrl) {
+      throw new Error("Backend URL is not defined");
     }
-  };
+
+    const response = await fetch(`${backendUrl}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data),
+      mode: "cors"
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: "Login failed" }));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const dataFromLogin = await response.json();
+    console.log("Login response:", dataFromLogin);
+
+    // Dispatch login action with the response data
+    dispatch(login({ dataFromLogin }));
+    
+    // Navigate to profile on successful login
+    navigate("/profile");
+    
+  } catch (err) {
+    console.error("Login error:", err);
+  } 
+};
 
 
 

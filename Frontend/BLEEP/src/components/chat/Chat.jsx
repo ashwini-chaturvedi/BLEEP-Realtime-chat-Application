@@ -72,11 +72,14 @@ const Chat = ({ chat }) => {
 
   const websocketBackendUrl = import.meta.env.VITE_WEBSOCKET_BACKEND_URL;
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const userId = useSelector((state) => state.authReducer.userId);
+  const user = useSelector((state) => state.authReducer.user);
+  const userId = user?.userId;
+  const token = useSelector((state) => state.authReducer.token);
 
   // Effect 1: Fetch initial messages when the selected chat changes
   useEffect(() => {
     const fetchAllMessages = async () => {
+      // Check if chat exists and has chatRoomId before proceeding
       if (!chat?.chatRoomId) {
         setMessages([]); // Clear messages if no chat is selected
         return;
@@ -84,7 +87,13 @@ const Chat = ({ chat }) => {
 
       setIsInitialLoad(true);
       try {
-        const res = await fetch(`${backendUrl}/message/chat-room-id/${chat.chatRoomId}`);
+        const res = await fetch(`${backendUrl}/message/chat-room-id/${chat.chatRoomId}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+          mode: "cors"
+        });
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         const allMessages = await res.json();
         setMessages(allMessages);
@@ -102,11 +111,11 @@ const Chat = ({ chat }) => {
     };
 
     fetchAllMessages();
-  }, [backendUrl, chat?.chatRoomId]); // Re-run only when the chat ID changes
+  }, [backendUrl, chat?.chatRoomId, token]); // Use optional chaining here
 
   // Effect 2: Manage the WebSocket connection
   useEffect(() => {
-    // Only connect if we have the necessary info
+    // Only connect if we have the necessary info and chat exists
     if (!userId || !websocketBackendUrl || !chat?.chatRoomId) {
       return;
     }
@@ -127,10 +136,6 @@ const Chat = ({ chat }) => {
       }
 
       setMessages((prevMessages) => {
-        // --- CORRECTED LOGIC TO PREVENT DUPLICATES ---
-
-        // Case 1: Check if this is a confirmation of our temporary message
-        // Look for temporary message by matching content, senderId, and chatRoomId
         const tempMessageIndex = prevMessages.findIndex(
           (msg) => 
             msg.isTemporary && 
@@ -177,39 +182,42 @@ const Chat = ({ chat }) => {
         socketRef.current.close();
       }
     };
-  }, [userId, websocketBackendUrl, chat?.chatRoomId]); // Reconnect if the user or chat changes
+  }, [userId, websocketBackendUrl, chat?.chatRoomId]); // Use optional chaining here
 
   // Function to handle sending a message
   const sendMessage = () => {
-    if (socketRef.current?.readyState === WebSocket.OPEN && newMessage.trim()) {
-      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      const tempMessage = {
-        messageId: tempId,
-        chatRoomId: chat.chatRoomId,
-        sendersId: userId,
-        content: newMessage.trim(),
-        timeStamp: new Date().toISOString(),
-        isTemporary: true,
-      };
-
-      // Add temporary message to state
-      setMessages(prev => [...prev, tempMessage]);
-      setShouldAutoScroll(true);
-
-      const messagePayload = {
-        tempId: tempId, // Send the temporary ID to the backend
-        chatRoomId: chat.chatRoomId,
-        sendersId: userId,
-        contentType: "text",
-        content: newMessage.trim(),
-        participants: chat.participants || [],
-        readBy: [],
-      };
-
-      socketRef.current.send(JSON.stringify(messagePayload));
-      setNewMessage('');
+    // Add safety check for chat existence
+    if (!chat?.chatRoomId || socketRef.current?.readyState !== WebSocket.OPEN || !newMessage.trim()) {
+      return;
     }
+
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    const tempMessage = {
+      messageId: tempId,
+      chatRoomId: chat.chatRoomId,
+      sendersId: userId,
+      content: newMessage.trim(),
+      timeStamp: new Date().toISOString(),
+      isTemporary: true,
+    };
+
+    // Add temporary message to state
+    setMessages(prev => [...prev, tempMessage]);
+    setShouldAutoScroll(true);
+
+    const messagePayload = {
+      tempId: tempId, // Send the temporary ID to the backend
+      chatRoomId: chat.chatRoomId,
+      sendersId: userId,
+      contentType: "text",
+      content: newMessage.trim(),
+      participants: chat.participants || [],
+      readBy: [],
+    };
+
+    socketRef.current.send(JSON.stringify(messagePayload));
+    setNewMessage('');
   };
 
   // Effect 3: Handle auto-scrolling

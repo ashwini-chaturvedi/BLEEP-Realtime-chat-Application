@@ -13,12 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/chat-room")
-@CrossOrigin(
-        origins = "http://localhost:5173",
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS},
-        allowedHeaders = {"Content-Type: application/json",
-                "Accept: application/json"}
-)
 public class ChatRoomController {
 
     @Autowired

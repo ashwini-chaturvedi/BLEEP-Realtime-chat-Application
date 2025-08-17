@@ -3,7 +3,9 @@ import { ChatList, Chat } from "../AllComponents";
 import { useSelector } from "react-redux";
 
 export default function Profile() {
-    const userId = useSelector((state)=>state.authReducer.userId)
+    const user = useSelector((state)=>state.authReducer.user)
+    const userId = user?.userId
+    const token=useSelector((state)=>state.authReducer.token)
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const [chats, setChats] = useState([]);
     const [selectedChat, setSelectedChat] = useState(null);
@@ -20,14 +22,17 @@ export default function Profile() {
     };
 
     useEffect(() => {
+        console.log(user)
+
         const fetchData = async () => {
             try {
-                console.log("UserId:", userId)
                 if (!backendUrl) throw new Error("Backend URL not defined");
 
                 const res = await fetch(`${backendUrl}/user/${userId}/allChats`, {
                     method: "GET",
-                    headers: { "Accept": "application/json" },
+                    headers: { "Accept": "application/json",
+                        "Authorization":`Bearer ${token}`
+                     },
                 });
 
                 if (!res.ok) {
@@ -36,6 +41,7 @@ export default function Profile() {
                 }
 
                 const raw = await res.json();
+                
                 console.log(raw)
                 setChats(raw);
             } catch (e) {
@@ -45,7 +51,7 @@ export default function Profile() {
         };
 
         fetchData();
-    }, [backendUrl, userId]);
+    }, [backendUrl, token, user, userId]);
 
     return (
         <div className="font-sans w-full h-screen flex antialiased text-gray-800">

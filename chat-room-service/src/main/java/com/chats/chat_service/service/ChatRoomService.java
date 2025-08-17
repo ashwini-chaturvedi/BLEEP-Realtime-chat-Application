@@ -6,18 +6,23 @@ import com.chats.chat_service.dto.ChatRoomResponse;
 import com.chats.chat_service.entity.ChatRoom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ChatRoomService {
-    @Autowired
-    private ChatRoomRepository chatRoomRepository;
+
+    private final ChatRoomRepository chatRoomRepository;
+    private final WebClient webClient;
 
     private ChatRoomResponse mapChatRoomToChatRoomResponse(ChatRoom chatRoom) {
         ChatRoomResponse newChatRoomResponse = new ChatRoomResponse();
@@ -38,7 +43,7 @@ public class ChatRoomService {
 
     public Mono<ChatRoomResponse> createChatRoom(ChatRoomRequest request) {
         //verify the user with the createdBy field from User Microservice
-        //Verify the Created By from the UserService that if this user is there or not
+
 
         ChatRoom newChatRoom = new ChatRoom();
         newChatRoom.setChatRoomName(request.getChatRoomName());
@@ -50,9 +55,30 @@ public class ChatRoomService {
         newChatRoom.setLastMessage(null);
 
         try {
-            return this.chatRoomRepository.save(newChatRoom)
-                    .map(chatRoom->mapChatRoomToChatRoomResponse(chatRoom))
-                    .onErrorMap(e -> new RuntimeException("Error occurred while creating a Message: " + e.getMessage()));
+            //Reactive Mono Response
+            Mono<ChatRoomResponse> createdChatRoomResponseMono =
+                    this.chatRoomRepository.save(newChatRoom)
+                            .map(this::mapChatRoomToChatRoomResponse)
+                            .onErrorMap(e -> new RuntimeException("Error occurred while creating a Message: " + e.getMessage()));
+
+            //Iterating for each participant and putting the chat room id in their chat list
+            Mono<ChatRoomResponse> finalResult = createdChatRoomResponseMono.flatMap(chatRoomResponse -> {
+                String chatRoomId = chatRoomResponse.getChatRoomId();
+
+                // For each participant, make a PUT call
+                return Flux.fromIterable(newChatRoom.getParticipants())
+                        .flatMap(userId ->
+                                webClient.put()
+                                        .uri("http://USER-SERVICE/user/addChatRoom/{userId}/{chatRoomId}", userId, chatRoomId)
+                                        .retrieve()
+                                        .bodyToMono(new ParameterizedTypeReference<List<String>>() {}) // assuming endpoint returns 200 OK with no body
+                        )
+                        .then(Mono.just(chatRoomResponse));
+                // after all PUT calls complete, return original ChatRoomResponse
+            });
+
+            return finalResult;
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
