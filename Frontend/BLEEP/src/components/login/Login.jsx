@@ -10,6 +10,7 @@ import { login } from '../../slice/authSlice';
 
 
 
+
 // A placeholder for your logo
 const Logo = () => (
   <svg className="h-12 w-auto text-gray-800" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -22,6 +23,7 @@ const LoginComponent = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const [error,setError]=useState(false)
 
   // Updated onSubmit function for your LoginComponent
 const onSubmit = async (data) => {
@@ -72,6 +74,7 @@ const onSubmit = async (data) => {
         <h1 className="text-3xl font-bold ml-4">Login to Your Account</h1>
       </div>
 
+
       <p className="text-gray-600 mb-8">
 
       </p>
@@ -79,7 +82,7 @@ const onSubmit = async (data) => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Form Fields */}
 
-
+       
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Email Id:</label>
           <input

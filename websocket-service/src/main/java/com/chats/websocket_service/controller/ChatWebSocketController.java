@@ -37,11 +37,6 @@ public class ChatWebSocketController extends TextWebSocketHandler {
     @Value("${rabbitmq.routing-key.new}")
     private String newMessagesRoutingKey;
 
-//    public ChatWebSocketController(RabbitTemplate rabbitTemplate, ObjectMapper objectMapper, UserValidationService userValidationService) {
-//        this.rabbitTemplate = rabbitTemplate;
-//        this.objectMapper = objectMapper;
-//        this.userValidationService = userValidationService;
-//    }
 
 
     private String getUserIdFromSession( WebSocketSession session) {

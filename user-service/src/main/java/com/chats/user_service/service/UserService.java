@@ -122,6 +122,7 @@ public class UserService {
 
 
     public boolean validateUserId(String userId) {
+
         return this.userRepository.existsById(userId);
     }
 }
