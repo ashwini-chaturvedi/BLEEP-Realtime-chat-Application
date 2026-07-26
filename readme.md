@@ -1416,17 +1416,12 @@ docker-compose down
 
 ---
 
-## License
-
-This project is licensed under the MIT License - see LICENSE file for details.
-
----
 
 ## Support
 
 For issues and questions:
 - Open an issue on GitHub
-- Contact: support@example.com
+- Contact: ashwinichaturvedi8924@gmail.com
 - Documentation: See `/docs` folder
 
 ---
