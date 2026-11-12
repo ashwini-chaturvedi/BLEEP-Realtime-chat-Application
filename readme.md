@@ -20,7 +20,7 @@ A modern, scalable real-time messaging application built with **Spring Boot micr
 
 ## Project Overview
 
-**Chats** is an enterprise-grade real-time messaging platform designed to facilitate seamless communication between users. The system supports:
+**BLEEP** is an enterprise-grade real-time messaging platform designed to facilitate seamless communication between users. The system supports:
 
 - ✅ User authentication & authorization (JWT-based)
 - ✅ One-to-one and group chat functionality
